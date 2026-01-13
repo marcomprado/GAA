@@ -32,9 +32,11 @@ type Monitor struct {
 // Rule representa uma regra de organização de arquivos
 type Rule struct {
 	Name             string   `yaml:"name"`
-	Extensions       []string `yaml:"extensions"`
+	Extensions       []string `yaml:"extensions,omitempty"`          // Opcional: lista de extensões (ex: [".pdf", ".docx"])
+	NameContains     []string `yaml:"name_contains,omitempty"`       // Opcional: arquivo deve conter uma dessas strings no nome
+	NameStartsWith   []string `yaml:"name_starts_with,omitempty"`    // Opcional: arquivo deve começar com uma dessas strings
 	Destination      string   `yaml:"destination"`
-	ConflictStrategy string   `yaml:"conflict_strategy"` // "rename", "overwrite", "skip"
+	ConflictStrategy string   `yaml:"conflict_strategy"` // "rename", "overwrite"
 }
 
 // LoadConfig carrega e parseia o arquivo de configuração YAML
@@ -104,8 +106,9 @@ func (c *Config) Validate() error {
 				return fmt.Errorf("monitor '%s', rule #%d has no name", monitor.Name, j+1)
 			}
 
-			if len(rule.Extensions) == 0 {
-				return fmt.Errorf("monitor '%s', rule '%s' has no extensions", monitor.Name, rule.Name)
+			// Pelo menos um critério de matching deve estar definido
+			if len(rule.Extensions) == 0 && len(rule.NameContains) == 0 && len(rule.NameStartsWith) == 0 {
+				return fmt.Errorf("monitor '%s', rule '%s': must define at least one matching criterion (extensions, name_contains, or name_starts_with)", monitor.Name, rule.Name)
 			}
 
 			if rule.Destination == "" {
