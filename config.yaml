@@ -1,0 +1,18 @@
+# Configurações Globais do Serviço
+settings:
+  log_level: "info"        # debug, info, warn, error
+  delay_before_move: 2s    # Tempo de espera para garantir que o ficheiro não está bloqueado
+  max_workers: 3           # Número de goroutines simultâneas para mover ficheiros
+
+# Lista de pastas a monitorizar
+monitors:
+  - name: "Pasta de Downloads"
+    source_path: "C:/Users/Utilizador/Downloads"
+    recursive: false
+    
+    # Regras específicas para esta pasta
+    rules:
+      - name: "Documentos de Trabalho"
+        extensions: [".pdf", ".docx", ".xlsx"]
+        destination: "D:/Arquivo/Documentos"
+        conflict_strategy: "rename" # Opções: rename, overwrite, skip
