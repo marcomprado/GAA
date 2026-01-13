@@ -15,4 +15,4 @@ monitors:
       - name: "Documentos de Trabalho"
         extensions: [".pdf", ".docx", ".xlsx"]
         destination: "/Users/marcomartinelli/Desktop/teste/organized"
-        conflict_strategy: "rename" # Opções: rename, overwrite, skip
+        conflict_strategy: "overwrite" # Opções: rename, overwrite, skip

@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"gaa/file-organizer/src/config"
+	"gaa/file-organizer/src/processor"
 )
 
 // FileWatcher monitora uma pasta e detecta novos arquivos
@@ -46,6 +47,17 @@ func NewFileWatcher(monitor *config.Monitor, delay time.Duration, logger *slog.L
 	return fw, nil
 }
 
+// isDestinationPath verifica se um path é destino de alguma regra
+func (fw *FileWatcher) isDestinationPath(path string) bool {
+	for _, rule := range fw.config.Rules {
+		// Verificar se path é igual ou está dentro do destino
+		if strings.HasPrefix(path, rule.Destination) {
+			return true
+		}
+	}
+	return false
+}
+
 // addPath adiciona um path ao watcher, recursivamente se necessário
 func (fw *FileWatcher) addPath(path string, recursive bool) error {
 	// Adicionar o path principal
@@ -63,8 +75,14 @@ func (fw *FileWatcher) addPath(path string, recursive bool) error {
 				return nil // Continuar mesmo com erro
 			}
 
-			// Adicionar apenas diretórios (exceto ocultos)
+			// Adicionar apenas diretórios (exceto ocultos e destinos)
 			if info.IsDir() && !strings.HasPrefix(filepath.Base(walkPath), ".") {
+				// Não monitorar se for pasta de destino
+				if fw.isDestinationPath(walkPath) {
+					fw.logger.Debug("Skipping destination path", "path", walkPath)
+					return filepath.SkipDir
+				}
+
 				if walkPath != path { // Não adicionar o path principal novamente
 					if err := fw.watcher.Add(walkPath); err != nil {
 						fw.logger.Warn("Failed to watch subdirectory", "path", walkPath, "error", err)
@@ -146,11 +164,16 @@ func (fw *FileWatcher) handleEvent(event fsnotify.Event) {
 	// Filtro 3: Ignorar diretórios (processar apenas arquivos)
 	if fileInfo.IsDir() {
 		// Se for recursivo e for um novo diretório, adicionar ao watcher
+		// (exceto se for pasta de destino)
 		if fw.config.Recursive && event.Op&fsnotify.Create == fsnotify.Create {
-			if err := fw.watcher.Add(event.Name); err != nil {
-				fw.logger.Warn("Failed to watch new subdirectory", "path", event.Name, "error", err)
+			if !fw.isDestinationPath(event.Name) {
+				if err := fw.watcher.Add(event.Name); err != nil {
+					fw.logger.Warn("Failed to watch new subdirectory", "path", event.Name, "error", err)
+				} else {
+					fw.logger.Debug("Now watching new subdirectory", "path", event.Name)
+				}
 			} else {
-				fw.logger.Debug("Now watching new subdirectory", "path", event.Name)
+				fw.logger.Debug("Skipping new destination directory", "path", event.Name)
 			}
 		}
 		return
@@ -173,9 +196,39 @@ func (fw *FileWatcher) handleEvent(event fsnotify.Event) {
 	fw.logger.Debug("File event detected", "file", event.Name, "op", event.Op.String())
 
 	if fw.IsFileReady(event.Name) {
-		fw.logger.Info("File ready for processing", "file", filename)
-		// TODO: Fase 3 - Processar arquivo (MatchRule + MoveFile)
-		// Por enquanto apenas loga
+		fw.logger.Debug("File ready for processing", "file", filename)
+
+		// Encontrar regra correspondente
+		rule := processor.MatchRule(event.Name, fw.config.Rules)
+		if rule == nil {
+			fw.logger.Debug("No matching rule for file", "file", filename)
+			return
+		}
+
+		fw.logger.Info("Rule matched",
+			"file", filename,
+			"rule", rule.Name,
+			"destination", rule.Destination,
+		)
+
+		// Mover arquivo
+		err := processor.MoveFile(
+			event.Name,
+			rule.Destination,
+			rule.ConflictStrategy,
+			fw.logger,
+		)
+		if err != nil {
+			fw.logger.Error("Failed to move file",
+				"file", filename,
+				"error", err,
+			)
+		} else {
+			fw.logger.Info("File organized successfully",
+				"file", filename,
+				"rule", rule.Name,
+			)
+		}
 	} else {
 		fw.logger.Warn("File not ready or locked", "file", filename)
 	}
