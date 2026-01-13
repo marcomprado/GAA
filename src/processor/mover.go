@@ -13,38 +13,52 @@ import (
 // MoveFile move um arquivo do source para o destination directory
 // aplica a estratégia de conflito especificada se o arquivo já existir
 func MoveFile(sourcePath, destDir, conflictStrategy string, logger *slog.Logger) error {
+	filename := filepath.Base(sourcePath)
+
 	// Verificar se arquivo fonte ainda existe
-	if _, err := os.Stat(sourcePath); os.IsNotExist(err) {
-		logger.Info("File no longer exists (user may have deleted)", "file", sourcePath)
+	sourceInfo, err := os.Stat(sourcePath)
+	if os.IsNotExist(err) {
+		logger.Warn("Source file no longer exists, skipping", "file", sourcePath)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to stat source file: %w", err)
+	}
+	if sourceInfo.IsDir() {
+		logger.Warn("Source is a directory, not a file, skipping", "path", sourcePath)
 		return nil
 	}
 
-	// Garantir que o diretório de destino existe
+	logger.Debug("Starting file move",
+		"source", sourcePath,
+		"dest_dir", destDir,
+		"file_size", sourceInfo.Size())
+
+	// Construir caminho de destino
+	destPath := filepath.Join(destDir, filename)
+
+	// Criar diretório de destino se não existir (antes de qualquer operação)
+	logger.Debug("Ensuring destination directory exists", "path", destDir)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
-
-	// Construir caminho de destino
-	filename := filepath.Base(sourcePath)
-	destPath := filepath.Join(destDir, filename)
+	logger.Debug("Destination directory ready", "path", destDir)
 
 	// Verificar se arquivo de destino já existe
-	if _, err := os.Stat(destPath); err == nil {
+	if _, statErr := os.Stat(destPath); statErr == nil {
 		// Arquivo já existe - aplicar estratégia de conflito
+		logger.Debug("Destination file already exists, applying conflict strategy",
+			"file", filename,
+			"strategy", conflictStrategy)
 		destPath, err = handleConflict(destPath, conflictStrategy, logger)
 		if err != nil {
 			return err
 		}
-
-		// Se destPath está vazio, significa que devemos skip
-		if destPath == "" {
-			logger.Info("File skipped (already exists)", "file", filename)
-			return nil
-		}
 	}
 
 	// Tentar mover o arquivo
-	err := os.Rename(sourcePath, destPath)
+	logger.Debug("Attempting to move file", "from", sourcePath, "to", destPath)
+	err = os.Rename(sourcePath, destPath)
 	if err != nil {
 		// Se falhar (provavelmente volumes diferentes), fazer copy + delete
 		if strings.Contains(err.Error(), "cross-device") || strings.Contains(err.Error(), "invalid cross-device link") {
@@ -56,7 +70,6 @@ func MoveFile(sourcePath, destDir, conflictStrategy string, logger *slog.Logger)
 			// Remover arquivo original apenas após cópia bem-sucedida
 			if err := os.Remove(sourcePath); err != nil {
 				logger.Warn("Failed to remove source file after copy", "file", sourcePath, "error", err)
-				// Não retornar erro aqui pois a cópia foi bem-sucedida
 			}
 		} else {
 			return fmt.Errorf("failed to move file: %w", err)
@@ -72,20 +85,14 @@ func MoveFile(sourcePath, destDir, conflictStrategy string, logger *slog.Logger)
 }
 
 // handleConflict aplica a estratégia de conflito e retorna o novo destPath
-// Retorna string vazia se o arquivo deve ser pulado (skip)
 func handleConflict(destPath, strategy string, logger *slog.Logger) (string, error) {
 	filename := filepath.Base(destPath)
 
 	switch strategy {
-	case "skip":
-		// Não fazer nada, retornar string vazia para indicar skip
-		return "", nil
-
 	case "overwrite":
-		// Deletar arquivo existente
-		if err := os.Remove(destPath); err != nil {
-			return "", fmt.Errorf("failed to remove existing file: %w", err)
-		}
+		// Para overwrite, simplesmente retornar o mesmo destPath
+		// os.Rename sobrescreve automaticamente no Unix/macOS
+		// Para cross-device, a lógica de backup está no MoveFile
 		logger.Debug("Existing file will be overwritten", "file", filename)
 		return destPath, nil
 
@@ -99,7 +106,7 @@ func handleConflict(destPath, strategy string, logger *slog.Logger) (string, err
 		return newDestPath, nil
 
 	default:
-		return "", fmt.Errorf("unknown conflict strategy: %s", strategy)
+		return "", fmt.Errorf("unknown conflict strategy: %s (use 'rename' or 'overwrite')", strategy)
 	}
 }
 

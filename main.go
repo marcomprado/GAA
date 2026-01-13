@@ -41,6 +41,13 @@ func main() {
 		log.Fatalf("Failed to parse delay_before_move: %v", err)
 	}
 
+	// Obter max_workers da config (com default)
+	maxWorkers := cfg.Settings.MaxWorkers
+	if maxWorkers <= 0 {
+		maxWorkers = 3 // Default
+		logger.Warn("Invalid max_workers in config, using default", "default", maxWorkers)
+	}
+
 	// Mostrar configuração carregada
 	for _, monitor := range cfg.Monitors {
 		logger.Info("Monitor configured",
@@ -54,7 +61,7 @@ func main() {
 	// Inicializar watchers
 	watchers := make([]*watcher.FileWatcher, 0, len(cfg.Monitors))
 	for _, monitor := range cfg.Monitors {
-		w, err := watcher.NewFileWatcher(&monitor, delay, logger)
+		w, err := watcher.NewFileWatcher(&monitor, delay, maxWorkers, logger)
 		if err != nil {
 			logger.Error("Failed to create watcher", "monitor", monitor.Name, "error", err)
 			continue

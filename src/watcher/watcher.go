@@ -10,37 +10,43 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"gaa/file-organizer/src/config"
-	"gaa/file-organizer/src/processor"
 )
 
 // FileWatcher monitora uma pasta e detecta novos arquivos
 type FileWatcher struct {
-	config  *config.Monitor
-	logger  *slog.Logger
-	watcher *fsnotify.Watcher
-	delay   time.Duration
-	doneCh  chan struct{}
+	config     *config.Monitor
+	logger     *slog.Logger
+	watcher    *fsnotify.Watcher
+	workerPool *WorkerPool
+	delay      time.Duration
+	doneCh     chan struct{}
 }
 
 // NewFileWatcher cria uma nova instância do file watcher
-func NewFileWatcher(monitor *config.Monitor, delay time.Duration, logger *slog.Logger) (*FileWatcher, error) {
+func NewFileWatcher(monitor *config.Monitor, delay time.Duration, workerPoolSize int, logger *slog.Logger) (*FileWatcher, error) {
 	// Criar watcher do fsnotify
 	fsWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fsnotify watcher: %w", err)
 	}
 
+	// Criar worker pool
+	workerPool := NewWorkerPool(workerPoolSize, logger)
+	workerPool.Start()
+
 	fw := &FileWatcher{
-		config:  monitor,
-		logger:  logger,
-		watcher: fsWatcher,
-		delay:   delay,
-		doneCh:  make(chan struct{}),
+		config:     monitor,
+		logger:     logger,
+		watcher:    fsWatcher,
+		workerPool: workerPool,
+		delay:      delay,
+		doneCh:     make(chan struct{}),
 	}
 
 	// Registrar o source_path
 	if err := fw.addPath(monitor.SourcePath, monitor.Recursive); err != nil {
 		fsWatcher.Close()
+		workerPool.Stop()
 		return nil, fmt.Errorf("failed to watch path: %w", err)
 	}
 
@@ -142,6 +148,12 @@ func (fw *FileWatcher) watchLoop() {
 
 // handleEvent processa um evento do fsnotify
 func (fw *FileWatcher) handleEvent(event fsnotify.Event) {
+	// Filtro 0: Ignorar eventos de pastas de destino (proteção extra)
+	if fw.isDestinationPath(event.Name) {
+		fw.logger.Debug("Ignoring event from destination path", "path", event.Name)
+		return
+	}
+
 	// Filtro 1: Ignorar eventos Chmod
 	if event.Op&fsnotify.Chmod == fsnotify.Chmod {
 		return
@@ -198,37 +210,11 @@ func (fw *FileWatcher) handleEvent(event fsnotify.Event) {
 	if fw.IsFileReady(event.Name) {
 		fw.logger.Debug("File ready for processing", "file", filename)
 
-		// Encontrar regra correspondente
-		rule := processor.MatchRule(event.Name, fw.config.Rules)
-		if rule == nil {
-			fw.logger.Debug("No matching rule for file", "file", filename)
-			return
-		}
-
-		fw.logger.Info("Rule matched",
-			"file", filename,
-			"rule", rule.Name,
-			"destination", rule.Destination,
-		)
-
-		// Mover arquivo
-		err := processor.MoveFile(
-			event.Name,
-			rule.Destination,
-			rule.ConflictStrategy,
-			fw.logger,
-		)
-		if err != nil {
-			fw.logger.Error("Failed to move file",
-				"file", filename,
-				"error", err,
-			)
-		} else {
-			fw.logger.Info("File organized successfully",
-				"file", filename,
-				"rule", rule.Name,
-			)
-		}
+		// Enviar job para worker pool
+		fw.workerPool.Submit(Job{
+			FilePath: event.Name,
+			Rules:    fw.config.Rules,
+		})
 	} else {
 		fw.logger.Warn("File not ready or locked", "file", filename)
 	}
@@ -313,6 +299,9 @@ func (fw *FileWatcher) Stop() {
 	if err := fw.watcher.Close(); err != nil {
 		fw.logger.Error("Error closing watcher", "error", err)
 	}
+
+	// Parar worker pool (aguarda jobs terminarem)
+	fw.workerPool.Stop()
 
 	fw.logger.Debug("File watcher stopped", "monitor", fw.config.Name)
 }

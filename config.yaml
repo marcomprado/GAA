@@ -1,6 +1,6 @@
 # Configurações Globais do Serviço
 settings:
-  log_level: "info"        # debug, info, warn, error
+  log_level: "debug"        # debug, info, warn, error
   delay_before_move: 2s    # Tempo de espera para garantir que o ficheiro não está bloqueado
   max_workers: 3           # Número de goroutines simultâneas para mover ficheiros
 
@@ -15,4 +15,4 @@ monitors:
       - name: "Documentos de Trabalho"
         extensions: [".pdf", ".docx", ".xlsx"]
         destination: "/Users/marcomartinelli/Desktop/teste/organized"
-        conflict_strategy: "overwrite" # Opções: rename, overwrite, skip
+        conflict_strategy: "rename" # Opções: rename, overwrite
