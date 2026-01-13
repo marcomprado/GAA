@@ -6,13 +6,13 @@ settings:
 
 # Lista de pastas a monitorizar
 monitors:
-  - name: "Pasta de Downloads"
-    source_path: "C:/Users/Utilizador/Downloads"
-    recursive: false
-    
+  - name: "Pasta Teste"
+    source_path: "/Users/marcomartinelli/Desktop/teste"
+    recursive: true  # Monitora todas as subpastas
+
     # Regras específicas para esta pasta
     rules:
       - name: "Documentos de Trabalho"
         extensions: [".pdf", ".docx", ".xlsx"]
-        destination: "D:/Arquivo/Documentos"
+        destination: "/Users/marcomartinelli/Desktop/teste/organized"
         conflict_strategy: "rename" # Opções: rename, overwrite, skip

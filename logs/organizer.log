@@ -1,0 +1,38 @@
+time=2026-01-13T11:45:28.109-03:00 level=INFO msg="File Organizer Daemon started" version=1.0.0 monitors=1 max_workers=3
+time=2026-01-13T11:45:28.109-03:00 level=INFO msg="Monitor configured" name="Pasta de Downloads" source=/Users/marcomartinelli/Desktop/teste/downloads rules=1
+time=2026-01-13T11:45:28.110-03:00 level=INFO msg="Daemon is running. Press Ctrl+C to stop."
+time=2026-01-13T11:45:29.800-03:00 level=INFO msg="Shutting down gracefully..." signal=interrupt
+time=2026-01-13T11:45:29.801-03:00 level=INFO msg="Daemon stopped"
+time=2026-01-13T11:55:15.487-03:00 level=INFO msg="File Organizer Daemon started" version=1.0.0 monitors=1 max_workers=3
+time=2026-01-13T11:55:15.487-03:00 level=INFO msg="Monitor configured" name="Pasta Teste" source=/Users/marcomartinelli/Desktop/teste rules=1
+time=2026-01-13T11:55:15.487-03:00 level=INFO msg="Daemon is running. Press Ctrl+C to stop."
+time=2026-01-13T11:55:17.168-03:00 level=INFO msg="Shutting down gracefully..." signal=interrupt
+time=2026-01-13T11:55:17.168-03:00 level=INFO msg="Daemon stopped"
+time=2026-01-13T12:00:51.948-03:00 level=INFO msg="File Organizer Daemon started" version=1.0.0 monitors=1 max_workers=3
+time=2026-01-13T12:00:51.948-03:00 level=INFO msg="Monitor configured" name="Pasta Teste" source=/Users/marcomartinelli/Desktop/teste recursive=true rules=1
+time=2026-01-13T12:00:51.948-03:00 level=INFO msg="Starting file watcher" monitor="Pasta Teste" path=/Users/marcomartinelli/Desktop/teste recursive=true
+time=2026-01-13T12:00:51.948-03:00 level=INFO msg="Watcher started successfully" monitor="Pasta Teste" path=/Users/marcomartinelli/Desktop/teste recursive=true
+time=2026-01-13T12:00:51.948-03:00 level=INFO msg="Daemon is running. Press Ctrl+C to stop."
+time=2026-01-13T12:00:53.572-03:00 level=INFO msg="File ready for processing" file=document.pdf
+time=2026-01-13T12:00:53.572-03:00 level=INFO msg="File ready for processing" file=spreadsheet.xlsx
+time=2026-01-13T12:00:53.572-03:00 level=INFO msg="File ready for processing" file=image.png
+time=2026-01-13T12:00:56.782-03:00 level=INFO msg="Shutting down gracefully..." signal=interrupt
+time=2026-01-13T12:00:56.782-03:00 level=INFO msg="Stopping file watcher" monitor="Pasta Teste"
+time=2026-01-13T12:00:56.782-03:00 level=INFO msg="Daemon stopped"
+time=2026-01-13T12:01:21.020-03:00 level=INFO msg="File Organizer Daemon started" version=1.0.0 monitors=1 max_workers=3
+time=2026-01-13T12:01:21.020-03:00 level=INFO msg="Monitor configured" name="Pasta Teste" source=/Users/marcomartinelli/Desktop/teste recursive=true rules=1
+time=2026-01-13T12:01:21.020-03:00 level=DEBUG msg="Watching path" path=/Users/marcomartinelli/Desktop/teste
+time=2026-01-13T12:01:21.020-03:00 level=DEBUG msg="Watching subdirectory" path=/Users/marcomartinelli/Desktop/teste/downloads
+time=2026-01-13T12:01:21.020-03:00 level=DEBUG msg="Watching subdirectory" path=/Users/marcomartinelli/Desktop/teste/organized
+time=2026-01-13T12:01:21.020-03:00 level=INFO msg="Starting file watcher" monitor="Pasta Teste" path=/Users/marcomartinelli/Desktop/teste recursive=true
+time=2026-01-13T12:01:21.020-03:00 level=INFO msg="Watcher started successfully" monitor="Pasta Teste" path=/Users/marcomartinelli/Desktop/teste recursive=true
+time=2026-01-13T12:01:21.020-03:00 level=INFO msg="Daemon is running. Press Ctrl+C to stop."
+time=2026-01-13T12:01:23.022-03:00 level=DEBUG msg="File event detected" file=/Users/marcomartinelli/Desktop/teste/report.pdf op=CREATE
+time=2026-01-13T12:01:23.022-03:00 level=INFO msg="File ready for processing" file=report.pdf
+time=2026-01-13T12:01:23.022-03:00 level=DEBUG msg="Ignoring hidden file" file=.secret.pdf
+time=2026-01-13T12:01:23.022-03:00 level=DEBUG msg="Ignoring temporary file" file=download.tmp
+time=2026-01-13T12:01:23.022-03:00 level=DEBUG msg="Ignoring temporary file" file=file.crdownload
+time=2026-01-13T12:01:26.325-03:00 level=INFO msg="Shutting down gracefully..." signal=interrupt
+time=2026-01-13T12:01:26.325-03:00 level=INFO msg="Stopping file watcher" monitor="Pasta Teste"
+time=2026-01-13T12:01:26.325-03:00 level=DEBUG msg="File watcher stopped" monitor="Pasta Teste"
+time=2026-01-13T12:01:26.325-03:00 level=INFO msg="Daemon stopped"
