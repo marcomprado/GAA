@@ -15,26 +15,40 @@ GAA File Organizer is a lightweight, concurrent file organization daemon written
 - Production-ready with comprehensive logging
 - Cross-platform support (Linux, macOS, Windows)
 
----
+## Project Architecture
 
-## Features
+### Directory Structure
 
-- **Real-time File Monitoring** — Uses fsnotify for instant file system event detection
-- **Recursive Directory Watching** — Monitor directories and all their subdirectories automatically
-- **Advanced File Filtering**:
-  - Match by file extension (`.pdf`, `.docx`, `.xlsx`, etc.)
-  - Match by filename patterns (`contains`, `starts_with`)
-  - Automatic exclusion of hidden files (`.hidden`)
-  - Automatic exclusion of temporary files (`.tmp`, `.crdownload`, `.part`)
-- **Concurrent Processing** — Configurable worker pool for parallel file operations
-- **Conflict Resolution** — Three strategies: `rename`, `overwrite`, or `skip`
-- **Intelligent File Handling**:
-  - Cross-device move support (copy + delete fallback)
-  - File readiness checking (ensures files are fully written)
-  - Retry logic for locked/busy files
-- **Comprehensive Logging** — Multiple log levels (debug, info, warn, error) with file and console output
-- **Graceful Shutdown** — Clean exit handling with pending job completion
-- **Robust Error Handling** — Panic recovery and detailed error reporting
+```
+GAA/
+├── main.go                    # Application entry point
+├── config.yaml               # Configuration file
+├── README.md                 # This file
+├── go.mod                    # Go module definition
+├── go.sum                    # Dependency checksums
+├── logs/                     # Log output directory
+│   └── organizer.log        # Daily/rolling log file
+└── src/
+    ├── config/
+    │   ├── config.go        # Config parsing and validation
+    │   └── logger.go        # Logging initialization
+    ├── processor/
+    │   ├── rules.go         # Rule matching engine
+    │   └── mover.go         # File movement operations
+    └── watcher/
+        ├── watcher.go       # File system monitoring (fsnotify)
+        └── worker_pool.go   # Concurrent job processing
+```
+
+### Core Components
+
+**Watcher** (`src/watcher/`): Monitors file system events using fsnotify, filters irrelevant events, checks file readiness, and submits jobs to the worker pool.
+
+**Processor** (`src/processor/`): Implements rule matching to determine which destination a file should move to, and handles the actual file move operations with conflict resolution.
+
+**Config** (`src/config/`): Parses and validates the YAML configuration, initializes logging, and provides configuration to all components.
+
+**Worker Pool**: Concurrent job queue with configurable workers for parallel file processing and graceful shutdown.
 
 ---
 
@@ -316,43 +330,6 @@ file.pdf → (remains in source directory)
 
 ---
 
-## Usage
-
-### Running the Organizer
-
-Start the daemon with the default configuration:
-```bash
-./gaa-organizer
-```
-
-Start with a custom configuration file:
-```bash
-./gaa-organizer -config /path/to/custom-config.yaml
-```
-
-### Stopping the Organizer
-
-Press `Ctrl+C` to gracefully shut down. The application will:
-1. Stop accepting new file events
-2. Complete processing of queued jobs
-3. Close all file handles
-4. Exit cleanly
-
-### Viewing Logs
-
-View real-time logs:
-```bash
-tail -f logs/organizer.log
-```
-
-View logs with specific level:
-```bash
-grep "ERROR" logs/organizer.log
-grep "WARN" logs/organizer.log
-```
-
----
-
 ## Logging
 
 ### Log Levels
@@ -370,54 +347,18 @@ Logs are written to:
 - **Console** (`stdout`/`stderr`) — Real-time feedback
 - **File** (`logs/organizer.log`) — Persistent record for later analysis
 
-### Example Log Entries
+### Viewing Logs
 
-```
-[2026-01-22T10:15:30Z] INFO: Starting file organizer with 4 workers
-[2026-01-22T10:15:30Z] INFO: Monitor "downloads_organizer" started watching ~/Downloads
-[2026-01-22T10:15:45Z] INFO: Moving ~/Downloads/document.pdf -> ~/Downloads/Documents/document.pdf
-[2026-01-22T10:15:46Z] INFO: File moved successfully, rule "pdf_documents" applied
-[2026-01-22T10:16:20Z] WARN: File exists at destination, applying rename strategy: document_1.pdf
-[2026-01-22T10:16:21Z] DEBUG: Worker 2 completed job for invoice.xlsx
+View real-time logs:
+```bash
+tail -f logs/organizer.log
 ```
 
----
-
-## Project Architecture
-
-### Directory Structure
-
+View logs with specific level:
+```bash
+grep "ERROR" logs/organizer.log
+grep "WARN" logs/organizer.log
 ```
-GAA/
-├── main.go                    # Application entry point
-├── config.yaml               # Configuration file
-├── README.md                 # This file
-├── go.mod                    # Go module definition
-├── go.sum                    # Dependency checksums
-├── logs/                     # Log output directory
-│   └── organizer.log        # Daily/rolling log file
-└── src/
-    ├── config/
-    │   ├── config.go        # Config parsing and validation
-    │   └── logger.go        # Logging initialization
-    ├── processor/
-    │   ├── rules.go         # Rule matching engine
-    │   └── mover.go         # File movement operations
-    └── watcher/
-        ├── watcher.go       # File system monitoring (fsnotify)
-        └── worker_pool.go   # Concurrent job processing
-```
-
-### Core Components
-
-**Watcher** (`src/watcher/`): Monitors file system events using fsnotify, filters irrelevant events, checks file readiness, and submits jobs to the worker pool.
-
-**Processor** (`src/processor/`): Implements rule matching to determine which destination a file should move to, and handles the actual file move operations with conflict resolution.
-
-**Config** (`src/config/`): Parses and validates the YAML configuration, initializes logging, and provides configuration to all components.
-
-**Worker Pool**: Concurrent job queue with configurable workers for parallel file processing and graceful shutdown.
-
 ---
 
 ## Troubleshooting
@@ -452,41 +393,5 @@ GAA/
 2. Verify destination directory has write permissions
 3. Check logs for permission errors
 4. For `rename` strategy: verify disk space for renamed files
-
----
-
-## Performance Tuning
-
-### Optimize `max_workers`
-
-More workers = faster processing, but more system resource usage:
-- **Downloads folder (typical usage)**: 4-6 workers
-- **Large file volumes**: 8-16 workers
-- **Low-power systems**: 2-4 workers
-
-```yaml
-settings:
-  max_workers: 8
-```
-
-### Adjust `delay_before_move`
-
-Balance between responsiveness and file stability:
-- **Fast completion files**: `1s` or `500ms`
-- **Large files**: `3-5s` (ensure fully written)
-- **Network shares**: `5-10s` (slower write confirmation)
-
-```yaml
-settings:
-  delay_before_move: 3s
-```
-
-### Recursive Monitoring
-
-Disable if not needed to reduce resource usage:
-```yaml
-monitors:
-  - recursive: false  # Only monitor top-level directory
-```
 
 ---
