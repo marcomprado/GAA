@@ -1,0 +1,6 @@
+# Log files
+logs/
+*.log
+
+# Compiled binary
+gaa-organizer

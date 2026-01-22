@@ -1,25 +1,145 @@
+settings:                                                                   
+    log_level: error         # Opções: debug, info, warn, error               
+    delay_before_move: 2s                                                     
+    max_workers: 4
+
 monitors:
-    - name: "Pasta Teste"
+# Monitor para Congonhas
+    - name: "Congonhas"
       source_path: "/Users/marcomartinelli/Desktop/teste"
       recursive: true
 
       rules:
-        # Regra 1: Por extensão + contém no nome
-        - name: "Documentos de Trabalho"
-          extensions: [".pdf", ".docx"]
-          name_contains: ["documento", "relatorio"]
-          destination: "/Users/marcomartinelli/Desktop/teste/organized/documentos"
-          conflict_strategy: "rename"
+        # Regra 1: Arrecadação de Receitas
+        - name: "Arrecadação de Receitas"
+          extensions: [".xlsx"]
+          name_contains_all: ["receitas", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Arrecadação de Receitas/2026"
+          conflict_strategy: "overwrite"
 
-        # Regra 2: Por extensão + começa com
-        - name: "Relatórios Financeiros"
-          extensions: [".pdf", ".xlsx"]
-          name_starts_with: ["rel", "report"]
-          destination: "/Users/marcomartinelli/Desktop/teste/organized/relatorios"
-          conflict_strategy: "rename"
+        # Regra 2: Balancete da Despesa
+        - name: "Balancete da Despesa"
+          extensions: [".xlsx"]
+          name_contains_all: ["balancete", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Balancete da Despesa/2026"
+          conflict_strategy: "overwrite"
 
-        # Regra 3: Apenas por extensão (catch-all para PDFs)
-        - name: "Todos os PDFs"
-          extensions: [".pdf"]
-          destination: "/Users/marcomartinelli/Desktop/teste/organized/pdfs"
-          conflict_strategy: "rename"
+        # Regra 3: Balancete da Receita
+        - name: "Balancete da Receita"
+          extensions: [".xlsx"]
+          name_contains_all: ["receita", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Balancete da Receita/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 4: Empenhos
+        - name: "Empenhos"
+          extensions: [".xlsx"]
+          name_contains_all: ["empenho", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Empenhos/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 5: Liquidações (com variações de acentuação)
+        - name: "Liquidações"
+          extensions: [".xlsx"]
+          name_contains_all: ["Congonhas", "liquida"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Liquidações/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 6: Pagamentos
+        - name: "Pagamentos"
+          extensions: [".xlsx"]
+          name_contains_all: ["pagamento", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Pagamentos/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 7: Receita Corrente Líquida (com abreviações)
+        - name: "Receita Corrente Líquida"
+          extensions: [".xlsx"]
+          name_contains_all: ["Congonhas", "receita corrente"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Receita Corrente Líquida/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 8: Saldos Bancários (com variações de acentuação)
+        - name: "Saldos Bancários"
+          extensions: [".xlsx"]
+          name_contains_all: ["saldo", "Congonhas"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Saldos Bancários/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 9: Superávit (com variações de acentuação)
+        - name: "Superávit"
+          extensions: [".xlsx"]
+          name_contains_all: ["Congonhas"]
+          name_contains: ["superavit", "superávit"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Congonhas/Superávit/2026"
+          conflict_strategy: "overwrite"
+# Monitor para Rib.Neves
+    - name: "Rib.Neves"
+      source_path: "/Users/marcomartinelli/Desktop/teste"
+      recursive: true
+
+      rules:
+        # Regra 1: Arrecadação de Receitas
+        - name: "Arrecadação de Receitas"
+          extensions: [".xlsx"]
+          name_contains_all: ["receitas", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Arrecadação de Receitas/2026"
+          conflict_strategy: "overwrite"
+
+          # Regra 2: Balancete da Despesa
+        - name: "Balancete da Despesa"
+          extensions: [".xlsx"]
+          name_contains_all: ["balancete", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Balancete da Despesa/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 3: Balancete da Receita
+        - name: "Balancete da Receita"
+          extensions: [".xlsx"]
+          name_contains_all: ["receita", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Balancete da Receita/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 4: Empenhos
+        - name: "Empenhos"
+          extensions: [".xlsx"]
+          name_contains_all: ["empenho", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Empenhos/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 5: Liquidações (com variações de acentuação)
+        - name: "Liquidações"
+          extensions: [".xlsx"]
+          name_contains_all: ["Rib.Neves", "liquida"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Liquidações/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 6: Pagamentos
+        - name: "Pagamentos"
+          extensions: [".xlsx"]
+          name_contains_all: ["pagamento", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Pagamentos/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 7: Receita Corrente Líquida (com abreviações)
+        - name: "Receita Corrente Líquida"
+          extensions: [".xlsx"]
+          name_contains_all: ["Rib.Neves", "receita corrente"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Receita Corrente Líquida/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 8: Saldos Bancários (com variações de acentuação)
+        - name: "Saldos Bancários"
+          extensions: [".xlsx"]
+          name_contains_all: ["saldo", "Rib.Neves"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Saldos Bancários/2026"
+          conflict_strategy: "overwrite"
+
+        # Regra 9: Superávit (com variações de acentuação)
+        - name: "Superávit"
+          extensions: [".xlsx"]
+          name_contains_all: ["Rib.Neves"]
+          name_contains: ["superavit", "superávit"]
+          destination: "/Users/marcomartinelli/Desktop/teste/Rib.Neves/Superávit/2026"
+          conflict_strategy: "overwrite"
+

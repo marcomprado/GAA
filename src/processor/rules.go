@@ -29,12 +29,20 @@ func MatchRule(filePath string, rules []config.Rule) *config.Rule {
 			continue // Extensão não corresponde, próxima regra
 		}
 
-		// Verificar name_contains (se definido)
+		// Verificar name_contains (se definido) - OR logic
 		// Se NameContains está vazio, considera match automático
 		// Se NameContains não está vazio, verifica se o nome contém alguma das strings
 		containsMatch := len(rule.NameContains) == 0 || matchesContains(nameWithoutExt, rule.NameContains)
 		if !containsMatch {
 			continue // Nome não contém nenhuma das strings, próxima regra
+		}
+
+		// Verificar name_contains_all (se definido) - AND logic
+		// Se NameContainsAll está vazio, considera match automático
+		// Se NameContainsAll não está vazio, verifica se o nome contém TODAS as strings
+		containsAllMatch := len(rule.NameContainsAll) == 0 || matchesContainsAll(nameWithoutExt, rule.NameContainsAll)
+		if !containsAllMatch {
+			continue // Nome não contém todas as strings, próxima regra
 		}
 
 		// Verificar name_starts_with (se definido)
@@ -78,6 +86,21 @@ func matchesContains(nameWithoutExt string, patterns []string) bool {
 		}
 	}
 	return false
+}
+
+// matchesContainsAll verifica se o nome do arquivo contém TODAS as strings especificadas (AND logic)
+func matchesContainsAll(nameWithoutExt string, patterns []string) bool {
+	for _, pattern := range patterns {
+		// Normalizar pattern para lowercase (matching case-insensitive)
+		normalizedPattern := strings.ToLower(pattern)
+
+		// Se qualquer pattern não for encontrado, retorna false
+		if !strings.Contains(nameWithoutExt, normalizedPattern) {
+			return false
+		}
+	}
+	// Todos os patterns foram encontrados
+	return true
 }
 
 // matchesStartsWith verifica se o nome do arquivo começa com alguma das strings especificadas

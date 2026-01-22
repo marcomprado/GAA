@@ -33,7 +33,8 @@ type Monitor struct {
 type Rule struct {
 	Name             string   `yaml:"name"`
 	Extensions       []string `yaml:"extensions,omitempty"`          // Opcional: lista de extensões (ex: [".pdf", ".docx"])
-	NameContains     []string `yaml:"name_contains,omitempty"`       // Opcional: arquivo deve conter uma dessas strings no nome
+	NameContains     []string `yaml:"name_contains,omitempty"`       // Opcional: arquivo deve conter uma dessas strings no nome (OR logic)
+	NameContainsAll  []string `yaml:"name_contains_all,omitempty"`   // Opcional: arquivo deve conter TODAS essas strings no nome (AND logic)
 	NameStartsWith   []string `yaml:"name_starts_with,omitempty"`    // Opcional: arquivo deve começar com uma dessas strings
 	Destination      string   `yaml:"destination"`
 	ConflictStrategy string   `yaml:"conflict_strategy"` // "rename", "overwrite"
@@ -107,8 +108,8 @@ func (c *Config) Validate() error {
 			}
 
 			// Pelo menos um critério de matching deve estar definido
-			if len(rule.Extensions) == 0 && len(rule.NameContains) == 0 && len(rule.NameStartsWith) == 0 {
-				return fmt.Errorf("monitor '%s', rule '%s': must define at least one matching criterion (extensions, name_contains, or name_starts_with)", monitor.Name, rule.Name)
+			if len(rule.Extensions) == 0 && len(rule.NameContains) == 0 && len(rule.NameContainsAll) == 0 && len(rule.NameStartsWith) == 0 {
+				return fmt.Errorf("monitor '%s', rule '%s': must define at least one matching criterion (extensions, name_contains, name_contains_all, or name_starts_with)", monitor.Name, rule.Name)
 			}
 
 			if rule.Destination == "" {
